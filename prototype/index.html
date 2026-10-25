@@ -279,6 +279,11 @@
       }
       .api-status.ok .status-dot { background: var(--good); color: var(--good); }
       .api-status.warn .status-dot { background: var(--mid); color: var(--mid); }
+      .api-status.err {
+        border-color: #fca5a5;
+        background: #fef2f2;
+        color: #991b1b;
+      }
       .api-status.err .status-dot { background: var(--low); color: var(--low); }
       .stepper {
         display: grid;
@@ -630,10 +635,17 @@
         margin-bottom: 1.25rem;
       }
       .error-box {
-        color: var(--low);
+        color: #991b1b;
         font-size: 0.88rem;
         margin-top: 0.75rem;
         line-height: 1.45;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        border: 1px solid #fca5a5;
+        background: #fef2f2;
+      }
+      .error-box[hidden] {
+        display: none !important;
       }
       button:disabled {
         opacity: 0.4;
@@ -816,6 +828,8 @@
       let charterFile = null;
       let transcriptFile = null;
       let apiStatus = { ai_configured: false, model: "gpt-4o-mini" };
+      let apiReachable = false;
+      let apiStatusDetail = "";
       let lastReportNote = "";
 
       function apiBase() {
@@ -845,27 +859,53 @@
         const el = document.getElementById("apiStatus");
         const text = document.getElementById("apiStatusText");
         el.classList.remove("ok", "warn", "err");
-        if (apiStatus.ai_configured) {
-          el.classList.add("ok");
-          text.textContent = `Live AI ready · ${apiStatus.model} will score sample runs and your uploads.`;
-        } else if (window.location.protocol === "file:") {
+        if (window.location.protocol === "file:") {
+          el.classList.add("err");
+          apiReachable = false;
+          text.textContent =
+            "Open http://127.0.0.1:8000/prototype/ (run ./scripts/run-prototype.sh). file:// cannot call the API.";
+        } else if (!apiReachable) {
           el.classList.add("err");
           text.textContent =
-            "Open this app from the server link (not as a file on your computer).";
+            apiStatusDetail ||
+            "Cannot reach /api/status. Start the backend or fix Vercel (deploy latest main with vercel.json).";
+        } else if (apiStatus.ai_configured) {
+          el.classList.add("ok");
+          text.textContent = `Live AI ready · ${apiStatus.model} will score sample runs and your uploads.`;
         } else {
           el.classList.add("warn");
           text.textContent =
-            "Live AI is off — analysis is unavailable until the server is configured.";
+            "API is up but OPENAI_API_KEY is missing. Add it to .env (local) or Vercel Environment Variables.";
         }
         updateAnalyzeButton();
       }
 
       async function refreshApiStatus() {
+        apiReachable = false;
+        apiStatusDetail = "";
+        if (window.location.protocol === "file:") {
+          renderApiStatus();
+          return;
+        }
         try {
           const res = await fetch(apiUrl("/api/status"));
-          if (res.ok) apiStatus = await res.json();
-        } catch {
-          apiStatus = { ai_configured: false, model: "gpt-4o-mini" };
+          const ct = res.headers.get("content-type") || "";
+          if (!res.ok) {
+            apiStatusDetail = `API error ${res.status}. Backend may not be deployed.`;
+            renderApiStatus();
+            return;
+          }
+          if (!ct.includes("application/json")) {
+            apiStatusDetail =
+              "API returned HTML instead of JSON (common on broken Vercel deploys). Redeploy latest main with vercel.json.";
+            renderApiStatus();
+            return;
+          }
+          apiStatus = await res.json();
+          apiReachable = true;
+        } catch (e) {
+          apiStatusDetail =
+            e instanceof Error ? e.message : "Network error reaching /api/status.";
         }
         renderApiStatus();
       }
@@ -937,9 +977,10 @@
       }
 
       function updateAnalyzeButton() {
-        const ready = apiStatus.ai_configured && (useSample || (charterFile && transcriptFile));
+        const ready =
+          apiReachable && apiStatus.ai_configured && (useSample || (charterFile && transcriptFile));
         document.getElementById("btnAnalyze").disabled = !ready;
-        document.getElementById("btnQuickLive").disabled = !apiStatus.ai_configured;
+        document.getElementById("btnQuickLive").disabled = !apiReachable || !apiStatus.ai_configured;
       }
 
       function setAnalyzeProgress(pct, text) {
@@ -953,6 +994,7 @@
         err.hidden = false;
         document.getElementById("analyzeErrorActions").hidden = false;
         setAnalyzeProgress(0, "Analysis failed");
+        goToStep(2);
       }
 
       async function fetchLiveReport() {
@@ -973,15 +1015,19 @@
 
       async function runAnalysis() {
         await refreshApiStatus();
-        if (!apiStatus.ai_configured) {
-          const msg =
-            "Live AI is not available. Refresh the page once analysis is enabled on the server.";
-          if (currentStep === 0) {
-            alert(msg);
-            return;
-          }
+        if (!apiReachable) {
+          const msg = apiStatusDetail || "Cannot reach the API. See the red status banner above.";
           document.getElementById("uploadError").textContent = msg;
           document.getElementById("uploadError").hidden = false;
+          if (currentStep === 0) alert(msg);
+          return;
+        }
+        if (!apiStatus.ai_configured) {
+          const msg =
+            "OPENAI_API_KEY is not set on the server. Add it to .env or Vercel env vars and redeploy.";
+          document.getElementById("uploadError").textContent = msg;
+          document.getElementById("uploadError").hidden = false;
+          if (currentStep === 0) alert(msg);
           return;
         }
         document.getElementById("uploadError").hidden = true;

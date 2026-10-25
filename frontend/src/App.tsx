@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchApiStatus, parseApiError, type ApiStatus } from "./api";
+import { checkBackend, parseApiError, type ApiStatus, type BackendCheck } from "./api";
 import { DEMO_REPORT } from "./demoReport";
 import type { AnalysisReport, MemberReport } from "./types";
 
@@ -57,15 +57,19 @@ function MemberCard({ member }: { member: MemberReport }) {
 export default function App() {
   const [charter, setCharter] = useState<File | null>(null);
   const [transcript, setTranscript] = useState<File | null>(null);
-  const [apiStatus, setApiStatus] = useState<ApiStatus | null>(null);
+  const [backend, setBackend] = useState<BackendCheck>({ state: "loading" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [reportNote, setReportNote] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchApiStatus().then(setApiStatus);
+    checkBackend().then(setBackend);
   }, []);
+
+  const apiStatus: ApiStatus | null =
+    backend.state === "ready" || backend.state === "ai_off" ? backend.status : null;
+  const liveAiReady = backend.state === "ready";
 
   const canSubmitUpload = useMemo(
     () => charter && transcript && !loading,
@@ -81,11 +85,16 @@ export default function App() {
     setReport(null);
     setReportNote(null);
 
-    const status = await fetchApiStatus();
-    setApiStatus(status);
-    if (!status.ai_configured) {
+    const check = await checkBackend();
+    setBackend(check);
+    if (check.state === "unreachable") {
+      setError(check.message);
+      setLoading(false);
+      return;
+    }
+    if (check.state === "ai_off") {
       setError(
-        "Live AI is not available. Try again once analysis is enabled on the server.",
+        "Live AI is off: set OPENAI_API_KEY in Vercel Environment Variables (or in .env locally), then redeploy.",
       );
       setLoading(false);
       return;
@@ -194,12 +203,25 @@ export default function App() {
       </section>
 
       <p
-        className={`api-status-line ${apiStatus?.ai_configured ? "ok" : "warn"}`}
+        className={`api-status-line ${
+          backend.state === "loading"
+            ? ""
+            : backend.state === "ready"
+              ? "ok"
+              : backend.state === "unreachable"
+                ? "err"
+                : "warn"
+        }`}
         role="status"
+        aria-live="polite"
       >
-        {apiStatus?.ai_configured
-          ? `Live AI ready (${apiStatus.model}) — sample and uploads use your OpenAI key.`
-          : "Live AI is off — analysis buttons are disabled until the server is configured."}
+        {backend.state === "loading"
+          ? "Checking API…"
+          : backend.state === "ready"
+            ? `Live AI ready (${backend.status.model}) — sample and uploads use your OpenAI key.`
+            : backend.state === "ai_off"
+              ? `API is up but OPENAI_API_KEY is missing (model: ${backend.status.model}). Add the key in Vercel env vars and redeploy.`
+              : backend.message}
       </p>
 
       <section className="upload-panel">
@@ -207,7 +229,7 @@ export default function App() {
           <button
             type="button"
             className="btn-primary-action"
-            disabled={loading || !apiStatus?.ai_configured}
+            disabled={loading || !liveAiReady}
             onClick={onAnalyzeSampleLive}
           >
             {loading ? "Analyzing…" : "Run live AI on sample team"}
@@ -239,7 +261,7 @@ export default function App() {
         <button
           type="button"
           className="btn-primary-action"
-          disabled={!canSubmitUpload || !apiStatus?.ai_configured}
+          disabled={!canSubmitUpload || !liveAiReady}
           onClick={onAnalyzeUpload}
         >
           {loading ? "Analyzing…" : "Run live AI on uploads"}

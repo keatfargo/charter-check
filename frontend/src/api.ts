@@ -3,6 +3,12 @@ export interface ApiStatus {
   model: string;
 }
 
+export type BackendCheck =
+  | { state: "loading" }
+  | { state: "ready"; status: ApiStatus }
+  | { state: "ai_off"; status: ApiStatus }
+  | { state: "unreachable"; message: string };
+
 export function parseApiError(detail: unknown, fallback: string): string {
   if (typeof detail === "string") return detail;
   if (Array.isArray(detail)) {
@@ -18,12 +24,43 @@ export function parseApiError(detail: unknown, fallback: string): string {
   return fallback;
 }
 
-export async function fetchApiStatus(): Promise<ApiStatus | null> {
+export async function checkBackend(): Promise<BackendCheck> {
   try {
     const res = await fetch("/api/status");
-    if (!res.ok) return null;
-    return (await res.json()) as ApiStatus;
+    const contentType = res.headers.get("content-type") ?? "";
+
+    if (!res.ok) {
+      return {
+        state: "unreachable",
+        message: `API returned ${res.status}. The backend may not be deployed (check Vercel /api routes).`,
+      };
+    }
+
+    if (!contentType.includes("application/json")) {
+      return {
+        state: "unreachable",
+        message:
+          "API did not return JSON (often the SPA index.html). Fix Vercel: deploy latest main with vercel.json and /api serverless function.",
+      };
+    }
+
+    const status = (await res.json()) as ApiStatus;
+    if (!status.ai_configured) {
+      return { state: "ai_off", status };
+    }
+    return { state: "ready", status };
   } catch {
-    return null;
+    return {
+      state: "unreachable",
+      message:
+        "Cannot reach /api/status. Start the server locally (./scripts/run-prototype.sh) or fix the Vercel deployment.",
+    };
   }
+}
+
+/** @deprecated use checkBackend */
+export async function fetchApiStatus(): Promise<ApiStatus | null> {
+  const check = await checkBackend();
+  if (check.state === "ready" || check.state === "ai_off") return check.status;
+  return null;
 }
