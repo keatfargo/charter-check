@@ -20,7 +20,7 @@ Vercel is **not** building the current `main` branch. That old commit has **no**
 1. Vercel → **Deployments**
 2. Click **Create Deployment** (top right)
 3. Choose **Git** → repository `keatfargo/keaton-charter-check` → branch **`main`**
-4. Confirm the commit is **`5e8de06`** or newer (not `6d36479`)
+4. Confirm the commit is **`75dfca9`** or newer (not `6d36479`)
 5. Deploy with **build cache off**
 
 Check the new log line: `Commit: 5e8de06…` and `npm install` / `vite build`.
@@ -36,15 +36,14 @@ Check the new log line: `Commit: 5e8de06…` and `npm install` / `vite build`.
 
 ---
 
-## Fix C — GitHub Actions (if dashboard stays stuck)
+## Fix C — Deploy from your laptop (if dashboard stays stuck)
 
-1. [Create a Vercel token](https://vercel.com/account/tokens)  
-2. Locally: `npx vercel link` in this repo → creates `.vercel/project.json`  
-3. GitHub → **keaton-charter-check** → **Settings** → **Secrets and variables** → **Actions**:
-   - `VERCEL_TOKEN`
-   - `VERCEL_ORG_ID` (from `.vercel/project.json`)
-   - `VERCEL_PROJECT_ID` (from `.vercel/project.json`)
-4. Push to `main` — workflow **Deploy to Vercel** runs and deploys the checked-out commit.
+```bash
+cd ~/charter-check
+git pull
+npx vercel link    # pick your existing Vercel project
+npx vercel --prod  # builds and deploys the code on disk (latest main)
+```
 
 ---
 
