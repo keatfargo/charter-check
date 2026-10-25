@@ -1,29 +1,62 @@
-# Vercel troubleshooting
+# Vercel: stuck on commit `6d36479`
 
-If the build log shows **Commit: 6d36479** (or finishes in ~50ms with “no files were prepared”), Vercel is **not** using the latest `main` from GitHub.
+GitHub **`main` is newer** (see [latest commit](https://github.com/keatfargo/keaton-charter-check/commits/main)).  
+If your build log still says:
 
-## Fix the Git connection
+```text
+Cloning ... (Branch: main, Commit: 6d36479)
+Build Completed in /vercel/output [~50ms]
+Skipping cache upload because no files were prepared
+```
 
-1. Vercel → your project → **Settings** → **Git**
-2. Confirm repository: `keatfargo/keaton-charter-check`
-3. **Deployments** → **Redeploy** → enable **Use existing Build Cache: Off** and pick the **latest** `main` commit (not an old deployment).
-4. If the commit hash is still old: **Settings** → **Git** → **Disconnect**, then reconnect the repo, or create a new project from the same repo.
+Vercel is **not** building the current `main` branch. That old commit has **no** `vercel.json` and **no** real build.
 
-## Build settings (dashboard)
+---
 
-| Setting | Value |
-|--------|--------|
-| **Root Directory** | *(empty — repository root)* |
-| **Framework Preset** | Other (or leave on Auto; `vercel.json` controls the build) |
-| **Build Command** | *(leave empty to use `vercel.json`)* |
-| **Output Directory** | *(leave empty to use `vercel.json`)* |
+## Fix A — Deploy the latest commit (try this first)
 
-## Environment variables
+**Do not** use **Redeploy** on an old deployment (that repeats `6d36479`).
 
-- `OPENAI_API_KEY` — required for live AI
+1. Vercel → **Deployments**
+2. Click **Create Deployment** (top right)
+3. Choose **Git** → repository `keatfargo/keaton-charter-check` → branch **`main`**
+4. Confirm the commit is **`5e8de06`** or newer (not `6d36479`)
+5. Deploy with **build cache off**
 
-## Success looks like
+Check the new log line: `Commit: 5e8de06…` and `npm install` / `vite build`.
 
-Build log should show a **recent commit** (not `6d36479`), `npm install`, `vite build`, and take **more than a few seconds**.
+---
 
-Test: `https://<your-app>.vercel.app/api/health` → `{"status":"ok"}`
+## Fix B — Reconnect Git
+
+1. **Settings** → **Git** → **Disconnect** repository  
+2. **Connect** `keatfargo/keaton-charter-check` again  
+3. **Settings** → **General** → **Root Directory**: leave **empty**  
+4. Create Deployment from **`main`** (Fix A)
+
+---
+
+## Fix C — GitHub Actions (if dashboard stays stuck)
+
+1. [Create a Vercel token](https://vercel.com/account/tokens)  
+2. Locally: `npx vercel link` in this repo → creates `.vercel/project.json`  
+3. GitHub → **keaton-charter-check** → **Settings** → **Secrets and variables** → **Actions**:
+   - `VERCEL_TOKEN`
+   - `VERCEL_ORG_ID` (from `.vercel/project.json`)
+   - `VERCEL_PROJECT_ID` (from `.vercel/project.json`)
+4. Push to `main` — workflow **Deploy to Vercel** runs and deploys the checked-out commit.
+
+---
+
+## Environment variables (Vercel project)
+
+| Name | Required |
+|------|----------|
+| `OPENAI_API_KEY` | Yes, for live AI |
+
+---
+
+## Success
+
+- Build takes **> 30s**, not ~50ms  
+- `https://<your-app>.vercel.app/api/health` → `{"status":"ok"}`

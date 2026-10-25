@@ -1,0 +1,1 @@
+Charter Check — if this file loads, the Vercel static build ran. Check Deployments for commit 5e8de06 or newer.
