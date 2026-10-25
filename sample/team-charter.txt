@@ -1,0 +1,30 @@
+Team Charter — CS 301 Project Group 4
+Semester: Fall 2026
+
+Members and roles
+
+Alex Kim — Project Manager
+- Schedules meetings and sends agendas 24 hours in advance
+- Keeps the team on time during meetings
+- Tracks action items and follows up before the next meeting
+- Communicates blockers to the instructor when needed
+
+Jordan Lee — Technical Lead
+- Owns architecture decisions and documents them in the repo README
+- Reviews pull requests within 48 hours
+- Unblocks teammates on implementation questions
+
+Mia Patel — Research & Requirements
+- Maintains the requirements doc and user stories
+- Summarizes customer/stakeholder feedback for the team
+- Ensures scope changes are discussed and recorded
+
+Sam Rivera — Quality & Demo
+- Writes test plans for each milestone
+- Runs the demo script before presentations
+- Captures meeting notes and posts them to the shared drive
+
+Team norms
+- Everyone speaks at least once per meeting
+- Decisions are made by consensus when possible
+- We respond to Slack within one business day

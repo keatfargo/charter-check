@@ -1,0 +1,24 @@
+CS 301 Group 4 — Weekly sync (Oct 15, 2026)
+Attendees: Alex, Jordan, Mia, Sam
+
+Alex: Thanks for joining. Today we need to finalize the milestone 2 scope and assign tasks. Jordan, can you walk us through the API design?
+
+Jordan: Sure. I pushed the OpenAPI draft last night. The auth flow still needs review—I want Mia to confirm it matches the stakeholder email from last week.
+
+Mia: I read the email this morning. They want social login optional, not required. I'll update the requirements doc after this call and flag the change in Slack.
+
+Sam: I started a test plan for the login module. I don't have cases for OAuth yet because the design was still moving.
+
+Alex: Let's timebox OAuth discussion to ten minutes. Jordan, what's the blocker?
+
+Jordan: We need a decision on the token library. I can implement either path by Friday if we decide today.
+
+Mia: Stakeholder didn't care which library—just that sessions expire after 24 hours. I'll add that to the requirements.
+
+Alex: Good. Sam, can you extend the test plan once Mia updates requirements?
+
+Sam: Yes, I'll post notes from this meeting to the drive tonight and expand tests tomorrow.
+
+Alex: I'll send the action item list after we hang up. We went five minutes over—I'll keep a tighter agenda next week.
+
+Jordan: I still owe PR review on Sam's branch from Monday. I'll do that today.
