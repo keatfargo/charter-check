@@ -76,3 +76,13 @@ Do not open `prototype/index.html` directly from the filesystem; the browser can
 3. The same model scores each person against the transcript and cites short quotes as evidence.
 
 Results are advisory—use them for team reflection, not performance management without context.
+
+## Deploy on Vercel
+
+1. Import the GitHub repo in [Vercel](https://vercel.com/new). Leave **Root Directory** empty (repo root); `vercel.json` configures the build.
+2. **Environment variables** (Project → Settings → Environment Variables):
+   - `OPENAI_API_KEY` — required for live AI
+   - `OPENAI_MODEL` — optional (default `gpt-4o-mini`)
+3. Deploy. The React app is served from `frontend/dist`; `/api/*` runs the FastAPI backend as a serverless function (`api/index.py`).
+
+Local prototype UI (`/prototype/`) is not deployed to Vercel; use the React app at your production URL.

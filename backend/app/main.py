@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
@@ -17,31 +18,42 @@ reload_project_env()
 
 app = FastAPI(title="Charter Check", version="0.1.0")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
+def _cors_origins() -> list[str]:
+    origins = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:8000",
         "http://127.0.0.1:8000",
-        "null",
-    ],
+    ]
+    vercel_url = os.getenv("VERCEL_URL", "").strip()
+    if vercel_url:
+        origins.append(f"https://{vercel_url}")
+    for key in ("VERCEL_BRANCH_URL", "VERCEL_PROJECT_PRODUCTION_URL"):
+        url = os.getenv(key, "").strip()
+        if url:
+            origins.append(f"https://{url}")
+    return origins
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+_prototype_dir = _root / "prototype"
+if _prototype_dir.is_dir():
+    app.mount(
+        "/prototype",
+        StaticFiles(directory=_prototype_dir, html=True),
+        name="prototype",
+    )
 
-@app.get("/")
-def root() -> RedirectResponse:
-    return RedirectResponse(url="/prototype/")
-
-
-app.mount(
-    "/prototype",
-    StaticFiles(directory=_root / "prototype", html=True),
-    name="prototype",
-)
+    @app.get("/")
+    def root() -> RedirectResponse:
+        return RedirectResponse(url="/prototype/")
 
 
 @app.get("/api/health")
@@ -109,8 +121,8 @@ def _run_analysis(charter_text: str, transcript_text: str) -> AnalysisReport:
         raise HTTPException(
             status_code=503,
             detail=(
-                "Live AI is off: add OPENAI_API_KEY=sk-… to charter-check/.env "
-                "(project root, not .gitignore), save, then restart ./scripts/run-prototype.sh."
+                "Live AI is off: set OPENAI_API_KEY in Vercel project Environment Variables "
+                "(or in charter-check/.env for local ./scripts/run-prototype.sh)."
             ),
         )
     try:
