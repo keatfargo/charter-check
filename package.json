@@ -1,0 +1,12 @@
+{
+  "name": "charter-check",
+  "private": true,
+  "description": "Repo root shim so Vercel runs the frontend build when Root Directory is the repository root.",
+  "scripts": {
+    "build": "npm install --prefix frontend && npm run build --prefix frontend",
+    "vercel-build": "npm run build"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
