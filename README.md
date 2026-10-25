@@ -79,7 +79,7 @@ Results are advisory—use them for team reflection, not performance management 
 
 ## Deploy on Vercel
 
-1. Import the GitHub repo in [Vercel](https://vercel.com/new). Leave **Root Directory** empty (repo root); `vercel.json` configures the build.
+1. Connect Vercel to this repo (`charter-check` or sync `keaton-charter-check` with `main` from here). Leave **Root Directory** empty; `vercel.json` at the repo root runs the build.
 2. **Environment variables** (Project → Settings → Environment Variables):
    - `OPENAI_API_KEY` — required for live AI
    - `OPENAI_MODEL` — optional (default `gpt-4o-mini`)
