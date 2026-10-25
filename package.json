@@ -1,12 +1,24 @@
 {
   "name": "charter-check",
   "private": true,
-  "description": "Repo root shim so Vercel runs the frontend build when Root Directory is the repository root.",
+  "description": "Charter Check — Vercel (vercel.json) and Netlify (netlify.toml) deploy from repo root.",
   "scripts": {
     "build": "npm install --prefix frontend && npm run build --prefix frontend",
     "vercel-build": "npm run build"
   },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "@netlify/functions": "^2.8.2",
+    "busboy": "^1.6.0",
+    "mammoth": "^1.9.0",
+    "openai": "^4.77.0",
+    "pdf-parse": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/busboy": "^1.5.4",
+    "@types/node": "^22.10.2",
+    "@types/pdf-parse": "^1.1.4"
   }
 }

@@ -1,0 +1,50 @@
+# Netlify deployment (Vercel uses vercel.json instead).
+[build]
+  command = "npm run build"
+  publish = "frontend/dist"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[functions]
+  included_files = ["sample/**"]
+  node_bundler = "esbuild"
+
+[functions."analyze"]
+  timeout = 26
+
+[functions."analyze-sample"]
+  timeout = 26
+
+# API → TypeScript serverless functions
+[[redirects]]
+  from = "/api/health"
+  to = "/.netlify/functions/health"
+  status = 200
+
+[[redirects]]
+  from = "/api/status"
+  to = "/.netlify/functions/status"
+  status = 200
+
+[[redirects]]
+  from = "/api/demo-report"
+  to = "/.netlify/functions/demo-report"
+  status = 200
+
+[[redirects]]
+  from = "/api/analyze/sample"
+  to = "/.netlify/functions/analyze-sample"
+  status = 200
+
+[[redirects]]
+  from = "/api/analyze"
+  to = "/.netlify/functions/analyze"
+  status = 200
+
+# React SPA (after static assets)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

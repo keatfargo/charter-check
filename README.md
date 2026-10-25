@@ -77,6 +77,14 @@ Do not open `prototype/index.html` directly from the filesystem; the browser can
 
 Results are advisory—use them for team reflection, not performance management without context.
 
+## Deploy on Netlify
+
+1. Import the repo in [Netlify](https://app.netlify.com). **Base directory:** repo root (Netlify reads `netlify.toml`).
+2. Trigger a **production** deploy. `netlify.toml` builds the React app (`frontend/dist`) and routes `/api/*` to TypeScript functions.
+3. Live AI uses [Netlify AI Gateway](https://docs.netlify.com/build/ai-gateway/overview/) after one production deploy on a credit-based plan (no OpenAI key required). Optional: set `OPENAI_API_KEY` / `OPENAI_MODEL` if you prefer your own key.
+
+See `DEPLOY_VERCEL.md` for Vercel-only notes. Use **either** Vercel or Netlify for production—not both on the same custom domain without planning.
+
 ## Deploy on Vercel
 
 1. Connect Vercel to this repo (`charter-check` or sync `keaton-charter-check` with `main` from here). Leave **Root Directory** empty; `vercel.json` at the repo root runs the build.
